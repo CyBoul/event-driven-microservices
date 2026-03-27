@@ -1,9 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.cyboul.cloud-platform</groupId>
-    <artifactId>platform</artifactId>
-    <version>1.0.0</version>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.12</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.cyboul.cloudplatform</groupId>
+    <artifactId>cloud-platform</artifactId>
+    <version>0.0.1</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -17,6 +24,10 @@
 
     <properties>
         <java.version>21</java.version>
-        <spring.boot.version>3.2.0</spring.boot.version>
+        <!--<spring.boot.version>3.5.12</spring.boot.version>-->
+        <spring.gateway.version>4.3.3</spring.gateway.version>
+        <!--<spring.kafka.version>3.3.14</spring.kafka.version>-->
+        <!--<spring.mongodb.version>3.5.12</spring.mongodb.version>-->
     </properties>
+
 </project>
