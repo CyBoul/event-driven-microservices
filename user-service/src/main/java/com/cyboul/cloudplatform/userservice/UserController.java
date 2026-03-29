@@ -1,5 +1,6 @@
 package com.cyboul.cloudplatform.userservice;
 
+import com.cyboul.cloudplatform.commonlib.dto.UserDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -27,12 +28,12 @@ public class UserController {
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @GetMapping
-    public List<UserResponse> getAll() {
+    public List<UserDTO> getAll() {
         return repo.findAll().stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getById(@PathVariable String id) {
+    public ResponseEntity<UserDTO> getById(@PathVariable String id) {
         return repo.findById(id)
                 .map(this::toResponse)
                 .map(ResponseEntity::ok)
@@ -40,7 +41,7 @@ public class UserController {
     }
 
     @GetMapping("/by-email")
-    public ResponseEntity<UserResponse> getByEmail(@RequestParam @NotBlank @Email String email) {
+    public ResponseEntity<UserDTO> getByEmail(@RequestParam @NotBlank @Email String email) {
         return repo.findByEmail(email)
                 .map(this::toResponse)
                 .map(ResponseEntity::ok)
@@ -48,16 +49,16 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
+    public ResponseEntity<UserDTO> create(@Valid @RequestBody CreateUserRequest request) {
         if (repo.existsByEmail(request.email())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
 
-        User user = new User();
-        user.setId(null);
-        user.setEmail(request.email());
-        user.setName(request.name());
-        user.setPassword(passwordEncoder.encode(request.password()));
+        User user = User.builder()
+                .email(request.email())
+                .name(request.name())
+                .password(passwordEncoder.encode(request.password()))
+                .build();
         try {
             User savedUser = repo.save(user);
             return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(savedUser));
@@ -68,11 +69,13 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponse> update(@PathVariable String id, @Valid @RequestBody UpdateUserRequest request) {
+    public ResponseEntity<UserDTO> update(@PathVariable String id, @Valid @RequestBody UpdateUserRequest request) {
         return repo.findById(id)
                 .map(existingUser -> {
-                    existingUser.setName(request.name());
-                    return ResponseEntity.ok(toResponse(repo.save(existingUser)));
+                    User updatedUser = existingUser.toBuilder()
+                            .name(request.name())
+                            .build();
+                    return ResponseEntity.ok(toResponse(repo.save(updatedUser)));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -82,6 +85,14 @@ public class UserController {
         repo.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    // ----- Mapper methods -----
+
+    private UserDTO toResponse(User user) {
+        return new UserDTO(user.getId(), user.getEmail(), user.getName());
+    }
+
+    // ----- Request DTOs -----
 
     public record CreateUserRequest(
             @NotBlank @Email String email,
@@ -93,13 +104,5 @@ public class UserController {
             @NotBlank String name
     ) {}
 
-    private UserResponse toResponse(User user) {
-        return new UserResponse(user.getId(), user.getEmail(), user.getName());
-    }
 
-    public record UserResponse(
-            String id,
-            String email,
-            String name
-    ) {}
 }
