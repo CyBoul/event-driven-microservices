@@ -50,9 +50,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_CLOUD_GATEWAY_ROUTES[0]_URI=http://userservice:8081
-      - SPRING_CLOUD_GATEWAY_ROUTES[1]_URI=http://productservice:8082
-      - SPRING_CLOUD_GATEWAY_ROUTES[2]_URI=http://orderservice:8083
+      - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - userservice
       - productservice
