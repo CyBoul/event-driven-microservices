@@ -9,14 +9,12 @@
         <version>0.0.1</version>
     </parent>
 
-    <artifactId>api-gateway</artifactId>
+    <artifactId>payment-service</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-gateway</artifactId>
-            <version>${spring.gateway.version}</version>
-            <scope>compile</scope>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
         </dependency>
     </dependencies>
 
