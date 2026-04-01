@@ -1,5 +1,18 @@
 services:
 
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./infra/mongo/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   userservice:
     build:
       context: .
@@ -28,18 +41,23 @@ services:
       mongodb:
         condition: service_healthy
 
-  mongodb:
-    image: mongo:7
-    container_name: mongodb
+  apigateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    image: apigateway:latest
+    container_name: apigateway
     ports:
-      - "27017:27017"
-    volumes:
-      - ./infra/mongo/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "8080:8080"
+    environment:
+      - SPRING_CLOUD_GATEWAY_ROUTES[0]_URI=http://userservice:8081
+      - SPRING_CLOUD_GATEWAY_ROUTES[1]_URI=http://productservice:8082
+      - SPRING_CLOUD_GATEWAY_ROUTES[2]_URI=http://orderservice:8083
+    depends_on:
+      - userservice
+      - productservice
+
+
 
   kafka:
     image: apache/kafka:3.9.0
