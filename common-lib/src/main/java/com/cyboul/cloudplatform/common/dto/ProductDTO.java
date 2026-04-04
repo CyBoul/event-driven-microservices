@@ -1,4 +1,4 @@
-package com.cyboul.cloudplatform.commonlib.dto;
+package com.cyboul.cloudplatform.common.dto;
 
 public record ProductDTO(
         String id,
