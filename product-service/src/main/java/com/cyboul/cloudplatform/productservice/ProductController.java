@@ -1,6 +1,6 @@
 package com.cyboul.cloudplatform.productservice;
 
-import com.cyboul.cloudplatform.commonlib.dto.ProductDTO;
+import com.cyboul.cloudplatform.common.dto.ProductDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
