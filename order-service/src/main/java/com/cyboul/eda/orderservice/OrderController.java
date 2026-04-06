@@ -1,6 +1,6 @@
-package com.cyboul.cloudplatform.orderservice;
+package com.cyboul.eda.orderservice;
 
-import com.cyboul.cloudplatform.common.events.OrderCreatedEvent;
+import com.cyboul.eda.common.events.OrderCreatedEvent;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

@@ -1,6 +1,6 @@
-package com.cyboul.cloudplatform.paymentservice;
+package com.cyboul.eda.paymentservice;
 
-import com.cyboul.cloudplatform.common.events.OrderCreatedEvent;
+import com.cyboul.eda.common.events.OrderCreatedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;

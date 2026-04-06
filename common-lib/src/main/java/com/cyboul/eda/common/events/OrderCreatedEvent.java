@@ -1,4 +1,4 @@
-package com.cyboul.cloudplatform.common.events;
+package com.cyboul.eda.common.events;
 
 public record OrderCreatedEvent(
         String orderId,

@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.cyboul.cloudplatform</groupId>
-        <artifactId>cloud-platform</artifactId>
+        <groupId>com.cyboul.eda</groupId>
+        <artifactId>event-driven-microservices</artifactId>
         <version>0.0.1</version>
     </parent>
 

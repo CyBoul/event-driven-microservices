@@ -1,4 +1,4 @@
-package com.cyboul.cloudplatform.paymentservice;
+package com.cyboul.eda.paymentservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

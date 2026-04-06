@@ -1,6 +1,6 @@
-package com.cyboul.cloudplatform.userservice;
+package com.cyboul.eda.userservice;
 
-import com.cyboul.cloudplatform.common.dto.UserDTO;
+import com.cyboul.eda.common.dto.UserDTO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

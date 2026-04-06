@@ -1,4 +1,4 @@
-package com.cyboul.cloudplatform.productservice;
+package com.cyboul.eda.productservice;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;

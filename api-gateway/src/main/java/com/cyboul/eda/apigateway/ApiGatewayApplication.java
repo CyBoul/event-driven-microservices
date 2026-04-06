@@ -1,4 +1,4 @@
-package com.cyboul.cloudplatform.apigateway;
+package com.cyboul.eda.apigateway;
 
 
 import org.springframework.boot.SpringApplication;

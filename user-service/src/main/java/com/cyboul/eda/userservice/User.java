@@ -1,4 +1,4 @@
-package com.cyboul.cloudplatform.userservice;
+package com.cyboul.eda.userservice;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

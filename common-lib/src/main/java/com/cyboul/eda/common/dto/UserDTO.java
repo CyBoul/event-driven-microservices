@@ -1,4 +1,4 @@
-package com.cyboul.cloudplatform.common.dto;
+package com.cyboul.eda.common.dto;
 
 public record UserDTO(
         String id,

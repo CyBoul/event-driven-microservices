@@ -1,4 +1,4 @@
-package com.cyboul.cloudplatform.productservice;
+package com.cyboul.eda.productservice;
 
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 
