@@ -55,6 +55,11 @@ services:
           --topic order-created \
           --partitions 1 \
           --replication-factor 1
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+          --create --if-not-exists \
+          --topic payment-proceed \
+          --partitions 1 \
+          --replication-factor 1
     restart: "no"
 
   orderservice:
@@ -79,6 +84,20 @@ services:
     container_name: paymentservice
     ports:
       - "8084:8084"
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
+  notifservice:
+    build:
+      context: .
+      dockerfile: notif-service/Dockerfile
+    image: notifservice:latest
+    container_name: notifservice
+    ports:
+      - "8085:8085"
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
