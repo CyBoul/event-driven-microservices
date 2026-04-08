@@ -9,6 +9,7 @@ COPY order-service/pom.xml order-service/pom.xml
 COPY payment-service/pom.xml payment-service/pom.xml
 COPY product-service/pom.xml product-service/pom.xml
 COPY user-service/pom.xml user-service/pom.xml
+COPY notif-service/pom.xml notif-service/pom.xml
 
 # Copy source files required by user-service and shared module.
 COPY common-lib/src common-lib/src
