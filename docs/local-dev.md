@@ -33,3 +33,16 @@ On first container startup, the following scripts run automatically from `infra/
 1. `01-init-dbs.js` — creates collections
 2. `02-init-indexes.js` — creates indexes (unique email on users, etc.)
 3. `03-init-data.js` — seeds sample data
+
+
+## MongoDB check-ups
+
+```bash
+docker exec mongodb mongosh --eval \
+"db.getSiblingDB('userdb').users.find().pretty()"   
+```
+
+```bash
+docker exec mongodb mongosh --eval \
+"db.getSiblingDB('notifdb').user_projections.find().pretty()"   
+```

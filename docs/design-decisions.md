@@ -16,6 +16,8 @@ In development, all databases share a single MongoDB instance for simplicity. In
 
 `order-service` publishes an `OrderCreatedEvent` to the `order-created` Kafka topic after persisting an order. `payment-service` consumes this event independently, enabling loose coupling and resilience between the two services.
 
+For decisions on event payload shape, PII handling, and notification resilience, see [Event payload & notification trade-offs](event-payload-tradeoffs.md).
+
 ## Shared contracts via `common-lib`
 
 DTOs (`UserDTO`, `ProductDTO`) and Kafka event records (`OrderCreatedEvent`) are defined as Java records in `common-lib` and shared across services — keeping the API contract explicit without duplicating code.
