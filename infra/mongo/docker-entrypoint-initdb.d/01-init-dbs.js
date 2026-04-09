@@ -9,3 +9,7 @@ db.createCollection("products");
 // --- ORDER SERVICE ---
 db = db.getSiblingDB("orderdb");
 db.createCollection("orders");
+
+// --- NOTIF SERVICE ---
+db = db.getSiblingDB("notifdb");
+db.createCollection("user_projections");

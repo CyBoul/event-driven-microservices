@@ -23,9 +23,13 @@ services:
       - "8081:8081"
     environment:
       - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/userdb
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_PROFILES_ACTIVE=dev
     depends_on:
       mongodb:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   productservice:
     build:
@@ -60,6 +64,12 @@ services:
           --topic payment-proceed \
           --partitions 1 \
           --replication-factor 1
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+          --create --if-not-exists \
+          --topic user-events \
+          --partitions 1 \
+          --replication-factor 1 \
+          --config retention.ms=86400000
     restart: "no"
 
   orderservice:
@@ -100,9 +110,12 @@ services:
       - "8085:8085"
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/notifdb
     depends_on:
       kafka-init:
         condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
 
   apigateway:
     build:

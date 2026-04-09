@@ -13,3 +13,6 @@ db = db.getSiblingDB("orderdb");
 db.orders.createIndex({ userId: 1 }); // search orders by userId
 db.orders.createIndex({ status: 1 }); // quick search by status
 db.orders.createIndex({ createdAt: -1 }); // for sorting
+
+// --- NOTIF SERVICE ---
+// user_projections uses userId as _id — unique by default, no extra index needed

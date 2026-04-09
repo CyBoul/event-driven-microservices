@@ -1,10 +1,3 @@
-// --- USER SERVICE ---
-db = db.getSiblingDB("userdb");
-db.users.insertMany([
-  { username: "admin", email: "admin@example.com", role: "ADMIN" },
-  { username: "user1", email: "user1@example.com", role: "USER" }
-]);
-
 // --- PRODUCT SERVICE ---
 db = db.getSiblingDB("productdb");
 db.products.insertMany([

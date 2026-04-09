@@ -15,7 +15,7 @@ public class PaymentProceedEventConsumer {
     private static final Logger log = LoggerFactory.getLogger(PaymentProceedEventConsumer.class);
 
     private final Sinks.Many<NotificationEvent> notificationSink;
-
+    private final UserContactRepository userContactRepository;
 
     @KafkaListener(topics = "payment-proceed", groupId = "${spring.kafka.consumer.group-id}")
     public void onPaymentProceed(PaymentProceedEvent event) {
@@ -32,7 +32,19 @@ public class PaymentProceedEventConsumer {
     }
 
     private void sendOrderConfirmationEmailToCustomer(PaymentProceedEvent event) {
+        String userId = event.order().userId();
+        UserContactProjection contact = userContactRepository.findById(userId).block();
 
+        if (contact == null) {
+            log.warn("NOTIF: No user contact found for userId={}, cannot send confirmation email", userId);
+            return;
+        }
+
+        // contact.getName() & contact.getEmail() can be used, but don't log !
+        log.info("NOTIF: Sending Order confirmation email to {} \nTransaction: {}\n" +
+                        "Order details: {{Product: {}, Quantity: {}}}",
+                userId, event.paymentId(),
+                event.order().productId(), event.order().amount());
     }
 
     private void notifyFrontEnd(PaymentProceedEvent event) {

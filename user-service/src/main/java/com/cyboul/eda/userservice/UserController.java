@@ -1,14 +1,19 @@
 package com.cyboul.eda.userservice;
 
 import com.cyboul.eda.common.dto.UserDTO;
+import com.cyboul.eda.common.events.UserCreatedEvent;
+import com.cyboul.eda.common.events.UserUpdatedEvent;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
@@ -24,7 +29,11 @@ import java.util.stream.Collectors;
 @Validated
 public class UserController {
 
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
+    private static final String USER_EVENTS_TOPIC = "user-events";
+
     private final UserRepository repo;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @GetMapping
@@ -61,8 +70,13 @@ public class UserController {
                 .build();
         try {
             User savedUser = repo.save(user);
+            kafkaTemplate.send(USER_EVENTS_TOPIC, savedUser.getId(),
+                            new UserCreatedEvent(savedUser.getId(), savedUser.getEmail(), savedUser.getName()))
+                    .whenComplete((r, ex) -> {
+                        if (ex != null) log.error("Failed to publish UserCreatedEvent for user {}", savedUser.getId(), ex);
+                    });
             return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(savedUser));
-            
+
         } catch (DuplicateKeyException ex) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
@@ -75,7 +89,13 @@ public class UserController {
                     User updatedUser = existingUser.toBuilder()
                             .name(request.name())
                             .build();
-                    return ResponseEntity.ok(toResponse(repo.save(updatedUser)));
+                    User saved = repo.save(updatedUser);
+                    kafkaTemplate.send(USER_EVENTS_TOPIC, saved.getId(),
+                                    new UserUpdatedEvent(saved.getName()))
+                            .whenComplete((r, ex) -> {
+                                if (ex != null) log.error("Failed to publish UserUpdatedEvent for user {}", saved.getId(), ex);
+                            });
+                    return ResponseEntity.ok(toResponse(saved));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -103,6 +123,4 @@ public class UserController {
     public record UpdateUserRequest(
             @NotBlank String name
     ) {}
-
-
 }
