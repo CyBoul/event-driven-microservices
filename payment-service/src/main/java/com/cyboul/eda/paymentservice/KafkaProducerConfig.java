@@ -14,11 +14,11 @@ public class KafkaProducerConfig {
     private static final Logger log = LoggerFactory.getLogger(KafkaProducerConfig.class);
 
     @Bean
-    public ProducerListener<String, Object> kafkaProducerListener() {
+    public ProducerListener<Object, Object> kafkaProducerListener() {
         // Global event-publishing errors handler
         return new ProducerListener<>() {
             @Override
-            public void onError(ProducerRecord<String, Object> record, RecordMetadata metadata, Exception ex) {
+            public void onError(ProducerRecord<Object, Object> record, RecordMetadata metadata, Exception ex) {
                 log.error("Failed to publish to topic {}: {}", record.topic(), ex.getMessage());
             }
         };
