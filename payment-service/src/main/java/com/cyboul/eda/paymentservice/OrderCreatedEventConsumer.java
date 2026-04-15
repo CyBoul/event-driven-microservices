@@ -21,6 +21,7 @@ public class OrderCreatedEventConsumer {
     private static final Logger log = LoggerFactory.getLogger(OrderCreatedEventConsumer.class);
 
     private final KafkaTemplate<String, PaymentProceedEvent> kafkaTemplate;
+    private final PaymentRecordRepository paymentRecordRepository;
 
     @KafkaListener(topics = "order-created", groupId = "${spring.kafka.consumer.group-id}")
     public void onOrderCreated(OrderCreatedEvent event) {
@@ -30,26 +31,21 @@ public class OrderCreatedEventConsumer {
         String paymentUuid = UUID.randomUUID().toString();
         PaymentStatus status = processPayment(event);
         notifySuccessOrFailure(paymentUuid, event, status);
+        PaymentStatus status = processPayment(event.orderId());
+        paymentRecordRepository.save(new PaymentRecord(event.orderId(), status, Instant.now()));
     }
 
-    private PaymentStatus processPayment(OrderCreatedEvent event) {
+    private PaymentStatus processPayment(String orderId) {
         log.info("PAYMENT: Processing...");
         PaymentStatus status = PaymentStatus.FAILED;
         try {
-            TimeUnit.MINUTES.sleep(1);
+            TimeUnit.SECONDS.sleep(30);
             status = PaymentStatus.SUCCESS;
-
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.warn("PAYMENT: (!) Processing interrupted for orderId={}", event.orderId());
+            log.warn("PAYMENT: (!) Processing interrupted for orderId={}", orderId);
         }
-        log.info("PAYMENT: Processed for orderId={} status={}", event.orderId(), status.name());
+        log.info("PAYMENT: Processed for orderId={} status={}", orderId, status.name());
         return status;
     }
-
-    private void notifySuccessOrFailure(String paymentId, OrderCreatedEvent order, PaymentStatus status) {
-        kafkaTemplate.send("payment-proceed", new PaymentProceedEvent(paymentId, order, status));
-    }
-
-
 }

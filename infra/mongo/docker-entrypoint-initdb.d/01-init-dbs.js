@@ -10,6 +10,10 @@ db.createCollection("products");
 db = db.getSiblingDB("orderdb");
 db.createCollection("orders");
 
+// --- PAYMENT SERVICE ---
+db = db.getSiblingDB("paymentdb");
+db.createCollection("payments");
+
 // --- NOTIF SERVICE ---
 db = db.getSiblingDB("notifdb");
 db.createCollection("user_projections");
