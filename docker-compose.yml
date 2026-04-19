@@ -41,9 +41,12 @@ services:
       - "8082:8082"
     environment:
       - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/productdb
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       mongodb:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   kafka-init:
     image: apache/kafka:3.9.0
@@ -57,7 +60,7 @@ services:
         /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
           --create --if-not-exists \
           --topic order-created \
-          --partitions 1 \
+          --partitions 4 \
           --replication-factor 1
         /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
           --create --if-not-exists \
@@ -70,6 +73,16 @@ services:
           --partitions 1 \
           --replication-factor 1 \
           --config retention.ms=86400000
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+          --create --if-not-exists \
+          --topic stock-reserved \
+          --partitions 4 \
+          --replication-factor 1
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+          --create --if-not-exists \
+          --topic stock-rejected \
+          --partitions 1 \
+          --replication-factor 1
     restart: "no"
 
   orderservice:
@@ -91,14 +104,14 @@ services:
       context: .
       dockerfile: payment-service/Dockerfile
     image: paymentservice:latest
-    container_name: paymentservice
-    ports:
-      - "8084:8084"
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/paymentdb
     depends_on:
       kafka-init:
         condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
 
   notifservice:
     build:
@@ -117,6 +130,17 @@ services:
       mongodb:
         condition: service_healthy
 
+  frontend:
+    build:
+      context: ./frontend
+    image: frontend:latest
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - apigateway
+      - notifservice
+
   apigateway:
     build:
       context: .
@@ -131,6 +155,7 @@ services:
       - userservice
       - productservice
       - orderservice
+      - notifservice
 
   kafka:
     image: apache/kafka:3.9.0
