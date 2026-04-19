@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EDA Shop Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f1117;
+      color: #e1e4e8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 600; color: #58a6ff; }
+    header .tag {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #1f3a4d;
+      color: #58a6ff;
+      border: 1px solid #0d419d;
+    }
+    .sse-status {
+      margin-left: auto;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sse-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #6e7681;
+      transition: background 0.3s;
+    }
+    .sse-dot.connected { background: #3fb950; box-shadow: 0 0 6px #3fb950; }
+    .sse-dot.error     { background: #f85149; }
+
+    main {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 0;
+      flex: 1;
+    }
+
+    /* ---- Left panel ---- */
+    .left-panel { padding: 24px; overflow-y: auto; }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8b949e;
+      margin-bottom: 14px;
+    }
+
+    .user-bar {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .user-bar label { font-size: 0.85rem; color: #8b949e; white-space: nowrap; }
+    .user-bar select {
+      flex: 1;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #e1e4e8;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .user-bar select:focus { outline: none; border-color: #58a6ff; }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .product-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.2s;
+    }
+    .product-card:hover { border-color: #58a6ff44; }
+
+    .product-name  { font-size: 1rem; font-weight: 600; }
+    .product-price { font-size: 1.4rem; font-weight: 700; color: #58a6ff; }
+    .product-stock { font-size: 0.75rem; color: #8b949e; }
+
+    .qty-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .qty-row label { font-size: 0.8rem; color: #8b949e; }
+    .qty-input {
+      width: 64px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #e1e4e8;
+      padding: 5px 8px;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    .qty-input:focus { outline: none; border-color: #58a6ff; }
+
+    .order-btn {
+      margin-top: auto;
+      background: #238636;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .order-btn:hover:not(:disabled) { background: #2ea043; }
+    .order-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .flash {
+      font-size: 0.75rem;
+      text-align: center;
+      height: 18px;
+    }
+    .flash.ok  { color: #3fb950; }
+    .flash.err { color: #f85149; }
+
+    .empty-state {
+      color: #8b949e;
+      font-size: 0.9rem;
+      padding: 32px 0;
+      text-align: center;
+    }
+
+    /* ---- Right panel (notifications) ---- */
+    .right-panel {
+      border-left: 1px solid #30363d;
+      background: #0d1117;
+      display: flex;
+      flex-direction: column;
+    }
+    .right-panel-header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .right-panel-header span { font-size: 0.85rem; font-weight: 600; }
+    .clear-btn {
+      background: none;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      color: #8b949e;
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+    .clear-btn:hover { border-color: #8b949e; color: #e1e4e8; }
+
+    #notifications {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .notif-placeholder {
+      color: #8b949e;
+      font-size: 0.82rem;
+      text-align: center;
+      margin: auto;
+    }
+
+    .notif-item {
+      background: #161b22;
+      border-radius: 8px;
+      padding: 12px 14px;
+      border-left: 3px solid #58a6ff;
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+    .notif-item.success { border-color: #3fb950; }
+    .notif-item.failed  { border-color: #f85149; }
+    .notif-item.cancelled { border-color: #d29922; }
+
+    .notif-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .notif-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      text-transform: uppercase;
+    }
+    .notif-badge.success  { background: #1a3a24; color: #3fb950; }
+    .notif-badge.failed   { background: #3a1a1a; color: #f85149; }
+    .notif-badge.cancelled{ background: #3a2e00; color: #d29922; }
+
+    .notif-time { color: #8b949e; font-size: 0.7rem; }
+    .notif-body { color: #c9d1d9; }
+    .notif-body strong { color: #e1e4e8; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>EDA Shop Demo</h1>
+  <span class="tag">event-driven</span>
+  <div class="sse-status">
+    <div class="sse-dot" id="sseDot"></div>
+    <span id="sseLabel">Connecting…</span>
+  </div>
+</header>
+
+<main>
+  <div class="left-panel">
+    <div class="section-title">Active User</div>
+    <div class="user-bar">
+      <label for="userSelect">Order as:</label>
+      <select id="userSelect">
+        <option value="">— loading users —</option>
+      </select>
+    </div>
+
+    <div class="section-title">Products</div>
+    <div class="product-grid" id="productGrid">
+      <p class="empty-state">Loading products…</p>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="right-panel-header">
+      <span>Live Notifications</span>
+      <button class="clear-btn" onclick="clearNotifs()">Clear</button>
+    </div>
+    <div id="notifications">
+      <p class="notif-placeholder">Waiting for events…</p>
+    </div>
+  </div>
+</main>
+
+<script>
+  // ─── Config ──────────────────────────────────────────────────────────────────
+  const API   = '/api';
+  const SSE_URL = '/notifications/stream';
+
+  // ─── State ───────────────────────────────────────────────────────────────────
+  let users    = [];
+  let products = [];
+
+  // ─── Boot ────────────────────────────────────────────────────────────────────
+  loadUsers();
+  loadProducts();
+  connectSSE();
+
+  // ─── Users ───────────────────────────────────────────────────────────────────
+  async function loadUsers() {
+    try {
+      const res = await fetch(`${API}/users`);
+      users = await res.json();
+      const sel = document.getElementById('userSelect');
+      sel.innerHTML = users.length
+        ? users.map(u => `<option value="${u.id}">${u.name} (${u.email})</option>`).join('')
+        : '<option value="">No users found</option>';
+    } catch {
+      document.getElementById('userSelect').innerHTML = '<option value="">Failed to load users</option>';
+    }
+  }
+
+  // ─── Products ────────────────────────────────────────────────────────────────
+  async function loadProducts() {
+    const grid = document.getElementById('productGrid');
+    try {
+      const res = await fetch(`${API}/products`);
+      products = await res.json();
+      if (!products.length) {
+        grid.innerHTML = '<p class="empty-state">No products found.</p>';
+        return;
+      }
+      grid.innerHTML = products.map(p => `
+        <div class="product-card" id="card-${p.uuid}">
+          <div class="product-name">${esc(p.name)}</div>
+          <div class="product-price">$${p.price.toFixed(2)}</div>
+          <div class="product-stock" id="stock-${p.uuid}">Stock: ${p.stock}</div>
+          <div class="qty-row">
+            <label>Qty</label>
+            <input class="qty-input" type="number" id="qty-${p.uuid}" value="1" min="1" max="99" />
+          </div>
+          <button class="order-btn" onclick="placeOrder('${p.uuid}', ${p.price})">Order</button>
+          <div class="flash" id="flash-${p.uuid}"></div>
+        </div>
+      `).join('');
+    } catch {
+      grid.innerHTML = '<p class="empty-state">Failed to load products.</p>';
+    }
+  }
+
+  // ─── Order ───────────────────────────────────────────────────────────────────
+  async function placeOrder(productId, unitPrice) {
+    const userId = document.getElementById('userSelect').value;
+    if (!userId) { alert('Select a user first.'); return; }
+
+    const quantity = parseInt(document.getElementById(`qty-${productId}`).value, 10) || 1;
+    const amount = +(unitPrice * quantity).toFixed(2);
+
+    const btn   = document.querySelector(`#card-${productId} .order-btn`);
+    const flash = document.getElementById(`flash-${productId}`);
+    btn.disabled = true;
+    flash.textContent = '';
+
+    const payload = {
+      uuid: crypto.randomUUID(),
+      userId,
+      productId,
+      quantity,
+      amount
+    };
+
+    try {
+      const res = await fetch(`${API}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        showFlash(flash, 'Order sent!', 'ok');
+      } else {
+        showFlash(flash, `Error ${res.status}`, 'err');
+      }
+    } catch {
+      showFlash(flash, 'Network error', 'err');
+    } finally {
+      setTimeout(() => { btn.disabled = false; }, 2000);
+    }
+  }
+
+  function showFlash(el, msg, cls) {
+    el.textContent = msg;
+    el.className   = `flash ${cls}`;
+    setTimeout(() => { el.textContent = ''; el.className = 'flash'; }, 4000);
+  }
+
+  // ─── SSE ─────────────────────────────────────────────────────────────────────
+  function connectSSE() {
+    const dot   = document.getElementById('sseDot');
+    const label = document.getElementById('sseLabel');
+
+    const es = new EventSource(SSE_URL);
+
+    es.onopen = () => {
+      dot.className   = 'sse-dot connected';
+      label.textContent = 'Live';
+    };
+
+    es.onerror = () => {
+      dot.className   = 'sse-dot error';
+      label.textContent = 'Reconnecting…';
+    };
+
+    // The server sends event type "payment-update"
+    es.addEventListener('payment-update', e => {
+      const data = JSON.parse(e.data);
+      pushNotification(data);
+    });
+  }
+
+  function pushNotification(data) {
+    const container = document.getElementById('notifications');
+    const placeholder = container.querySelector('.notif-placeholder');
+    if (placeholder) placeholder.remove();
+
+    const status = (data.status || '').toLowerCase();
+    const order  = data.order || {};
+
+    if (status === 'success' && order.productId) {
+      const product = products.find(p => p.uuid === order.productId);
+      if (product) {
+        product.stock = Math.max(0, product.stock - (order.quantity || 1));
+        const stockEl = document.getElementById(`stock-${product.uuid}`);
+        if (stockEl) {
+          stockEl.textContent = `Stock: ${product.stock}`;
+          stockEl.style.color = product.stock === 0 ? '#f85149' : '';
+        }
+        const qtyInput = document.getElementById(`qty-${product.uuid}`);
+        if (qtyInput) qtyInput.max = product.stock;
+        if (product.stock === 0) {
+          const btn = document.querySelector(`#card-${product.uuid} .order-btn`);
+          if (btn) { btn.disabled = true; btn.textContent = 'Out of stock'; }
+        }
+      }
+    }
+
+    const productName = products.find(p => p.uuid === order.productId)?.name || order.productId;
+    const userName    = users.find(u => u.id === order.userId)?.name       || order.userId;
+    const quantity    = order.quantity || 1;
+    const item = document.createElement('div');
+    item.className = `notif-item ${status}`;
+    item.innerHTML = `
+      <div class="notif-header">
+        <span class="notif-badge ${status}">${esc(data.status)}</span>
+        <span class="notif-time">${new Date().toLocaleTimeString()}</span>
+      </div>
+      <div class="notif-body">
+        <strong>${esc(userName)}</strong> — ${esc(productName)}<br/>
+        Qty: <strong>${quantity}</strong> &nbsp;·&nbsp; Amount: <strong>$${Number(order.amount || 0).toFixed(2)}</strong><br/>
+        <span style="color:#8b949e;font-size:0.7rem">Payment ID: ${esc(data.paymentUuid)}</span>
+      </div>
+    `;
+
+    container.prepend(item);
+  }
+
+  function clearNotifs() {
+    const c = document.getElementById('notifications');
+    c.innerHTML = '<p class="notif-placeholder">Waiting for events…</p>';
+  }
+
+  // ─── Util ────────────────────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
