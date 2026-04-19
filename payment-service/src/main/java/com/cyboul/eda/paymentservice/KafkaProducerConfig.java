@@ -15,7 +15,6 @@ public class KafkaProducerConfig {
 
     @Bean
     public ProducerListener<Object, Object> kafkaProducerListener() {
-        // Global event-publishing errors handler
         return new ProducerListener<>() {
             @Override
             public void onError(ProducerRecord<Object, Object> record, RecordMetadata metadata, Exception ex) {
