@@ -22,13 +22,13 @@ public class UserEventConsumer {
 
     @KafkaHandler
     public void onUserCreated(UserCreatedEvent event) {
-        log.info("Notif: Received UserCreatedEvent for userId={}", event.userId());
+        log.info("NOTIF: Received UserCreatedEvent for userId={}", event.userId());
         userContactRepository.save(new UserContactProjection(event.userId(), event.email(), event.name())).block();
     }
 
     @KafkaHandler
     public void onUserUpdated(UserUpdatedEvent event, @Header(KafkaHeaders.RECEIVED_KEY) String userId) {
-        log.info("Notif: Received UserUpdatedEvent for userId={}", userId);
+        log.info("NOTIF: Received UserUpdatedEvent for userId={}", userId);
         userContactRepository.findById(userId)
                 .doOnNext(p -> p.setName(event.name()))
                 .flatMap(userContactRepository::save)
@@ -37,6 +37,6 @@ public class UserEventConsumer {
 
     @KafkaHandler(isDefault = true)
     public void onUnknown(Object event) {
-        log.warn("Notif: Received unknown event on user-events topic: {}", event.getClass().getName());
+        log.warn("NOTIF: Received unknown event on user-events topic: {}", event.getClass().getName());
     }
 }

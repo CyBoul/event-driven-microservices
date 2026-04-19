@@ -19,7 +19,7 @@ public class PaymentProceedEventConsumer {
 
     @KafkaListener(topics = "payment-proceed", groupId = "${spring.kafka.consumer.group-id}")
     public void onPaymentProceed(PaymentProceedEvent event) {
-        log.info("Notif: Received PaymentProceedEvent, payment:{} status:{}", event.paymentId(), event.status());
+        log.info("NOTIF: Received PaymentProceedEvent, paymentId={}, status={}", event.paymentUuid(), event.status());
 
         switch (event.status()) {
             case FAILED, CANCELLED -> notifyFrontEnd(event);
@@ -27,7 +27,7 @@ public class PaymentProceedEventConsumer {
                 notifyFrontEnd(event);
                 sendOrderConfirmationEmailToCustomer(event);
             }
-            default -> log.warn("Unhandled PaymentStatus: {}", event.status());
+            default -> log.warn("NOTIF: Unhandled PaymentStatus: {}", event.status());
         }
     }
 
@@ -41,18 +41,25 @@ public class PaymentProceedEventConsumer {
         }
 
         // contact.getName() & contact.getEmail() can be used, but don't log !
-        log.info("NOTIF: Sending Order confirmation email to {} \nTransaction: {}\n" +
-                        "Order details: {{Product: {}, Quantity: {}}}",
-                userId, event.paymentId(),
-                event.order().productId(), event.order().amount());
+        log.info("NOTIF: Sending Order confirmation email to {} \n" +
+                 "---------------------------------------\n" +
+                 "Transaction: {}\nOrder: {}\n" +
+                 "Order details: { Product: {} x{} for {} }\n" +
+                 "Customer: {}\nCustomer Address: {}\n" +
+                 "---------------------------------------",
+                 userId, event.paymentUuid(), event.order().orderUuid(),
+                 event.order().productId(), event.order().quantity(), event.order().amount(),
+                 contact.getUserId(), "TODO");
     }
 
     private void notifyFrontEnd(PaymentProceedEvent event) {
-        Sinks.EmitResult result = notificationSink
-                .tryEmitNext(new NotificationEvent("payment-update", event));
+        log.info("NOTIF: Notifying Frontend for order={}, status={}", event.order().orderUuid(), event.status());
+
+        Sinks.EmitResult result = notificationSink.tryEmitNext(new NotificationEvent("payment-update",
+                new OrderOutcomeNotification(event.paymentUuid(), event.order(), event.status())));
 
         if (result.isFailure() && result != Sinks.EmitResult.FAIL_ZERO_SUBSCRIBER) {
-            log.warn("Failed to push notification to frontend: {}", result);
+            log.warn("NOTIF: Failed to push notification to frontend: {}", result);
         }
     }
 }

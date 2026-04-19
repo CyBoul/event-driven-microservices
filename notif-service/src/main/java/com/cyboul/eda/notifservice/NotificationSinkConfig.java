@@ -9,6 +9,6 @@ public class NotificationSinkConfig {
 
     @Bean
     public Sinks.Many<NotificationEvent> notificationSink() {
-        return Sinks.many().multicast().onBackpressureBuffer();
+        return Sinks.many().multicast().onBackpressureBuffer(256, false);
     }
 }
