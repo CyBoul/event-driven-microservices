@@ -1,7 +1,7 @@
 package com.cyboul.eda.common.events;
 
 public record PaymentProceedEvent(
-    String paymentId,
+    String paymentUuid,
     OrderCreatedEvent order,
     PaymentStatus status
 ){}
