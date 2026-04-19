@@ -38,7 +38,9 @@ public class UserController {
 
     @GetMapping
     public List<UserDTO> getAll() {
-        return repo.findAll().stream().map(this::toResponse).collect(Collectors.toList());
+        return repo.findAll().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
@@ -62,40 +64,23 @@ public class UserController {
         if (repo.existsByEmail(request.email())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
-
-        User user = User.builder()
+        User savedUser = repo.save(User.builder()
                 .email(request.email())
                 .name(request.name())
                 .password(passwordEncoder.encode(request.password()))
-                .build();
-        try {
-            User savedUser = repo.save(user);
-            kafkaTemplate.send(USER_EVENTS_TOPIC, savedUser.getId(),
-                            new UserCreatedEvent(savedUser.getId(), savedUser.getEmail(), savedUser.getName()))
-                    .whenComplete((r, ex) -> {
-                        if (ex != null) log.error("Failed to publish UserCreatedEvent for user {}", savedUser.getId(), ex);
-                    });
-            return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(savedUser));
+                .build());
 
-        } catch (DuplicateKeyException ex) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
-        }
+        sendEvent(savedUser.getId(), new UserCreatedEvent(savedUser.getId(), savedUser.getEmail(), savedUser.getName()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(savedUser));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> update(@PathVariable String id, @Valid @RequestBody UpdateUserRequest request) {
+    public ResponseEntity<UserDTO> update(@PathVariable String id, @Valid @RequestBody UpdateUserRequest userUpdateRequest) {
         return repo.findById(id)
                 .map(existingUser -> {
-                    User updatedUser = existingUser.toBuilder()
-                            .name(request.name())
-                            .build();
-                    User saved = repo.save(updatedUser);
-                    kafkaTemplate.send(USER_EVENTS_TOPIC, saved.getId(),
-                                    new UserUpdatedEvent(saved.getName()))
-                            .whenComplete((r, ex) -> {
-                                if (ex != null) log.error("Failed to publish UserUpdatedEvent for user {}", saved.getId(), ex);
-                            });
-                    return ResponseEntity.ok(toResponse(saved));
+                    User savedUser = repo.save(existingUser.toBuilder().name(userUpdateRequest.name()).build());
+                    sendEvent(savedUser.getId(), new UserUpdatedEvent(savedUser.getName()));
+                    return ResponseEntity.ok(toResponse(savedUser));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -106,7 +91,22 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    // ----- Mapper methods -----
+
+    // ----- Kafka Event Producer -----
+
+    private void sendEvent(String userId, Object event) {
+        try {
+            kafkaTemplate.send(USER_EVENTS_TOPIC, userId, event)
+                    .whenComplete((r, ex) -> {
+                        if (ex != null)
+                            log.error("Failed to publish UserCreatedEvent for user {}", userId, ex);
+                    });
+        } catch (DuplicateKeyException ex) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
+        }
+    }
+
+    // ----- Mapper method -----
 
     private UserDTO toResponse(User user) {
         return new UserDTO(user.getId(), user.getEmail(), user.getName());
@@ -118,9 +118,7 @@ public class UserController {
             @NotBlank @Email String email,
             @NotBlank String name,
             @NotBlank @Size(min = 8, message = "Password must be at least 8 characters") String password
-    ) {}
+    ){}
 
-    public record UpdateUserRequest(
-            @NotBlank String name
-    ) {}
+    public record UpdateUserRequest(@NotBlank String name) {}
 }

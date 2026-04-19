@@ -30,21 +30,27 @@ public class DevDataSeeder implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         List<User> seeds = List.of(
-                User.builder().email("admin@example.com").name("Admin").password(passwordEncoder.encode("adminpass")).build(),
-                User.builder().email("user1@example.com").name("User One").password(passwordEncoder.encode("userpass1")).build()
+                User.builder().name("Admin")
+                        .email("admin@example.com")
+                        .password(passwordEncoder.encode("adminpass"))
+                        .build(),
+                User.builder().name("User One")
+                        .email("user1@example.com")
+                        .password(passwordEncoder.encode("userpass1"))
+                        .build()
         );
 
         for (User seed : seeds) {
             if (userRepository.existsByEmail(seed.getEmail())) {
-                log.info("DevDataSeeder: skipping {}, already exists", seed.getEmail());
+                log.info("DevDataSeeder: skipping {}, email already exists", seed.getName());
                 continue;
             }
             User saved = userRepository.save(seed);
             kafkaTemplate.send("user-events", saved.getId(),
                             new UserCreatedEvent(saved.getId(), saved.getEmail(), saved.getName()))
                     .whenComplete((r, ex) -> {
-                        if (ex != null) log.error("DevDataSeeder: failed to publish UserCreatedEvent for {}", saved.getEmail(), ex);
-                        else log.info("DevDataSeeder: seeded user {} ({})", saved.getName(), saved.getEmail());
+                        if (ex != null) log.error("DevDataSeeder: failed to publish UserCreatedEvent for {}", saved.getName(), ex);
+                        else log.info("DevDataSeeder: seeded user {}", saved.getName());
                     });
         }
     }
