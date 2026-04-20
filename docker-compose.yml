@@ -95,9 +95,12 @@ services:
       - "8083:8083"
     environment:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/orderdb
     depends_on:
       kafka-init:
         condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
 
   paymentservice:
     build:
